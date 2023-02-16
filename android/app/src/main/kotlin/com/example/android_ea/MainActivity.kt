@@ -1,5 +1,4 @@
 package com.example.android_ea
-
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -10,7 +9,6 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
-import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -28,9 +26,8 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
     private var connectedThread: ConnectedThread? = null
     var supportedDevice: BluetoothDevice? = null
     private var eventSink: EventChannel.EventSink? = null
-    private val sch: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-
-
+    private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    private var socket: BluetoothSocket? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
 
@@ -57,7 +54,7 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
     private fun discoverSupportedDevice(result: MethodChannel.Result) {
         val boundedDevices = bluetoothManager.adapter.bondedDevices
         for(device in boundedDevices) {
-            if(device.name.contains("Arrow")) {
+            if(device.name.contains("Bad Elf")) {
                 supportedDevice = device
                 break
             }
@@ -69,21 +66,37 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
         }
     }
     @SuppressLint("MissingPermission")
-    private fun fetchBluetoothSocket(result: MethodChannel.Result): BluetoothSocket? {
-        if (supportedDevice == null) return null
+    private fun fetchBluetoothSocket(result: MethodChannel.Result) {
+        if (supportedDevice == null) return result.error("400", "No supported Devices found", "")
         val uuid = supportedDevice!!.uuids.first().uuid
         bluetoothManager.adapter.cancelDiscovery()
-        val socket: BluetoothSocket by lazy(LazyThreadSafetyMode.NONE) {
+        val socket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
             supportedDevice!!.createInsecureRfcommSocketToServiceRecord(uuid)
         }
-
-        return socket
+        this.socket = socket
     }
 
     @SuppressLint("MissingPermission")
     private fun connectToDevice(result: MethodChannel.Result) {
-        val socket = fetchBluetoothSocket(result)
-        socket!!.connect()
+        fetchBluetoothSocket(result)
+        if(socket == null) return result.error("400", "socket is unavailable", "")
+        try {
+            socket!!.connect()
+        } catch (e: IOException) {
+            return result.error("400", "Socket Unavailable: " + e.message, "")
+        }
+        connectedThread = ConnectedThread(socket!!)
+        connectedThread!!.start()
+        return result.success("Connection Successful")
+    }
+
+    private fun reconnect() {
+        //FIXME: Figure out a way of this being up until it actually reconnect.
+        if(socket==null) return
+        if(connectedThread != null && connectedThread!!.isAlive) {
+            connectedThread!!.interrupt()
+        }
+
         connectedThread = ConnectedThread(socket!!)
         connectedThread!!.start()
     }
@@ -94,35 +107,47 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
 
     override fun onCancel(arguments: Any?) {
         eventSink = null
+        if(socket != null) socket!!.close()
     }
 
     private inner class ConnectedThread(val socket: BluetoothSocket): Thread() {
-
         val inputStream: InputStream = socket.inputStream
         val outputSteam: OutputStream = socket.outputStream
         val mmBuffer: ByteArray = ByteArray(1024)
-
-        var reader = BufferedReader(inputStream.reader())
         var numBytes: Int? = null
         var currentMessage: String = ""
 
+        private val pingTask = Runnable {
+            try {
+                val byteArray =  "/r/n".toByteArray()
+                outputSteam.write(byteArray)  // send data to Bad Elf Device
+            } catch (e: IOException) {
+                runOnUiThread {
+                    eventSink!!.error("400", "Pingtask:" + e.message, "")
+                }
+                try {
+                    outputSteam.close()
+                } catch (e: IOException) {
+                    runOnUiThread {
+                        eventSink!!.error("400", "Pingtask2:" + e.message, "")
+                    }
+                }
+            }
+        }
+
         override fun run() {
             var pingFuture: ScheduledFuture<*>? = null
-            pingFuture = sch.scheduleAtFixedRate(pingTask, 2000, 500, TimeUnit.MILLISECONDS);
+            pingFuture = scheduler.scheduleAtFixedRate(pingTask, 2000, 500, TimeUnit.MILLISECONDS);
 
-            while(true) {
-                try {
+            try {
+                while (-1 != inputStream.read(mmBuffer) && !interrupted() && socket.isConnected) {
+
                     numBytes = inputStream.read(mmBuffer)
-
-                    mmBuffer.forEach {
-                        var currentChar = it.toInt().toChar().toString()
-                        // Clean garbage data
-                        if(it < 0x20 || it > 0x7e) {
-                            return
-                        }
+                    for(byte in mmBuffer) {
+                        var currentChar = byte.toInt().toChar().toString()
 
                         currentMessage += currentChar
-                        if(it.toInt() == 0x0a) {
+                        if (byte.toInt() == 0x0a) {
                             val copy = String(currentMessage.toByteArray())
                             runOnUiThread {
                                 println("sending..." + copy)
@@ -131,31 +156,14 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
                             currentMessage = ""
                         }
                     }
-                } catch (e: IOException) {
-                    println("deu ruim")
-                } finally {
-                    if(socket != null) {
-                        try {
-                            socket.close()
-                        } catch (e: IOException) {
-                            // Since we don't need the socket we can just ignore this exception.
-                        }
-                    }
                 }
-            }
-        }
-
-        private val pingTask = Runnable {
-            try {
-                val byteArray =  "/r/n".toByteArray()
-                outputSteam.write(byteArray)  // send data to Bad Elf Device
             } catch (e: IOException) {
-                    eventSink!!.error("400", e.message, "")
-                try {
-                    outputSteam.close();
-                } catch (e: IOException) {
-                    eventSink!!.error("400", e.message, "")e
+                runOnUiThread {
+                    eventSink!!.error("400", "catch on Thread", "")
                 }
+                println("Closing Socket")
+                socket.close()
+                pingFuture.cancel(true)
             }
         }
     }
