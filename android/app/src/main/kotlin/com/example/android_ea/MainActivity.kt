@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.os.SystemClock
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -141,20 +142,22 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
 
             try {
                 while (-1 != inputStream.read(mmBuffer) && !interrupted() && socket.isConnected) {
+                    if(inputStream.available() > 0) {
+                        for(byte in mmBuffer) {
+                            var currentChar = byte.toInt().toChar().toString()
 
-                    numBytes = inputStream.read(mmBuffer)
-                    for(byte in mmBuffer) {
-                        var currentChar = byte.toInt().toChar().toString()
-
-                        currentMessage += currentChar
-                        if (byte.toInt() == 0x0a) {
-                            val copy = String(currentMessage.toByteArray())
-                            runOnUiThread {
-                                println("sending..." + copy)
-                                eventSink!!.success(copy)
+                            currentMessage += currentChar
+                            if (byte.toInt() == 0x0a) {
+                                val copy = String(currentMessage.toByteArray())
+                                runOnUiThread {
+                                    println("sending..." + copy)
+                                    eventSink!!.success(copy)
+                                }
+                                currentMessage = ""
                             }
-                            currentMessage = ""
                         }
+                    } else {
+                        SystemClock.sleep(100)
                     }
                 }
             } catch (e: IOException) {
