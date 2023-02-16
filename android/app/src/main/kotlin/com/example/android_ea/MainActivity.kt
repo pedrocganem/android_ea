@@ -4,16 +4,16 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.os.SystemClock
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
-import kotlinx.coroutines.runBlocking
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -30,6 +30,11 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
     private var eventSink: EventChannel.EventSink? = null
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
     private var socket: BluetoothSocket? = null
+
+    private val handler = Handler(Looper.getMainLooper(), Handler.Callback {
+        eventSink?.success(it.obj as String)
+        return@Callback true
+    })
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
 
@@ -51,6 +56,8 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
             ?: return result.error("400", "Bluetooth is Off", "")
         return result.success("Bluetooth is on")
     }
+
+
 
     @SuppressLint("MissingPermission")
     private fun discoverSupportedDevice(result: MethodChannel.Result) {
@@ -115,8 +122,6 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
     private inner class ConnectedThread(val socket: BluetoothSocket): Thread() {
         val inputStream: InputStream = socket.inputStream
         val outputSteam: OutputStream = socket.outputStream
-        val mmBuffer: ByteArray = ByteArray(1024)
-        var currentMessage: String = ""
 
         private val pingTask = Runnable {
             try {
@@ -141,21 +146,12 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
             pingFuture = scheduler.scheduleAtFixedRate(pingTask, 2000, 500, TimeUnit.MILLISECONDS);
 
             try {
-                while (-1 != inputStream.read(mmBuffer) && !interrupted() && socket.isConnected) {
-                    // This is to fix data being overridden on the inputStream, if the buffer is full, wait for it ;)
-                    if(inputStream.available() > 0) {
-                        for(byte in mmBuffer) {
-                            var currentChar = byte.toInt().toChar().toString()
-
-                            currentMessage += currentChar
-                            if (byte.toInt() == 0x0a) {
-                                val copy = String(currentMessage.toByteArray())
-                                runOnUiThread {
-                                    eventSink!!.success(copy)
-                                }
-                                currentMessage = ""
-                            }
-                        }
+                val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+                while (socket.isConnected && !interrupted()) {
+                    if (reader.ready()) {
+                        val line = reader.readLine()
+                        val message = Message.obtain(handler, 0, line)
+                        message.sendToTarget()
                     } else {
                         SystemClock.sleep(50)
                     }
@@ -167,6 +163,9 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
                 println("Closing Socket")
                 socket.close()
                 pingFuture.cancel(true)
+            } finally {
+                socket.close()
+                interrupt()
             }
         }
     }

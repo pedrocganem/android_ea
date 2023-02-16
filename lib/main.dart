@@ -1,3 +1,4 @@
+import 'package:android_ea/NMEA_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -68,7 +69,9 @@ class _MyHomePageState extends State<MyHomePage> {
           builder: (context, snapshot) {
             print(snapshot.data);
             if (snapshot.hasData) {
-              return Text(snapshot.data as String);
+              return Column(
+                children: [Text("Data: ${snapshot.data}")],
+              );
             }
             return Text("No data");
           },
