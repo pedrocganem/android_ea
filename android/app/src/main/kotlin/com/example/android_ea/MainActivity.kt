@@ -10,6 +10,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -115,7 +116,6 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
         val inputStream: InputStream = socket.inputStream
         val outputSteam: OutputStream = socket.outputStream
         val mmBuffer: ByteArray = ByteArray(1024)
-        var numBytes: Int? = null
         var currentMessage: String = ""
 
         private val pingTask = Runnable {
@@ -142,6 +142,7 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
 
             try {
                 while (-1 != inputStream.read(mmBuffer) && !interrupted() && socket.isConnected) {
+                    // This is to fix data being overridden on the inputStream, if the buffer is full, wait for it ;)
                     if(inputStream.available() > 0) {
                         for(byte in mmBuffer) {
                             var currentChar = byte.toInt().toChar().toString()
@@ -150,14 +151,13 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
                             if (byte.toInt() == 0x0a) {
                                 val copy = String(currentMessage.toByteArray())
                                 runOnUiThread {
-                                    println("sending..." + copy)
                                     eventSink!!.success(copy)
                                 }
                                 currentMessage = ""
                             }
                         }
                     } else {
-                        SystemClock.sleep(100)
+                        SystemClock.sleep(50)
                     }
                 }
             } catch (e: IOException) {

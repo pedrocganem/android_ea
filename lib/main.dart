@@ -51,15 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> getBondedDevices() async {
     var devices = await methodChannel.invokeMethod("discoverSupportedDevice");
     debugPrint(devices);
-    // for (var device in devices) {
-    //   _devices.add({
-    //     "name": device,
-    //   });
-    //   debugdebugPrint(device.toString());
-    // }
-    // setState(() {
-
-    // });
   }
 
   Future<void> connectToDevice() async {
@@ -75,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: StreamBuilder(
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
+            print(snapshot.data);
             if (snapshot.hasData) {
               return Text(snapshot.data as String);
             }
