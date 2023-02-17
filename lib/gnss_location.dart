@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'dart:math';
+
 class GNSSLocation {
   String? receiverType;
   double? latitude;
@@ -16,6 +18,8 @@ class GNSSLocation {
   int? batteryPercentage;
   double? latitudeError;
   double? longitudeError;
+  String? latPrefix;
+  String? longPrefix;
 
   GNSSLocation({
     this.receiverType,
@@ -33,6 +37,8 @@ class GNSSLocation {
     this.batteryPercentage,
     this.latitudeError,
     this.longitudeError,
+    this.latPrefix = "",
+    this.longPrefix = "",
   });
 
   GNSSLocation merge(GNSSLocation oldData) {
@@ -53,6 +59,66 @@ class GNSSLocation {
       latitudeError: latitudeError ?? oldData.latitudeError,
       longitudeError: longitudeError ?? oldData.longitudeError,
     );
+  }
+
+  double calculateAccuracy(double latError, double longError) {
+    final a = pow(longError, 2);
+    final b = pow(latError, 2);
+    final c = a + b;
+    final d = sqrt(c);
+    final accuracy = d.truncateToDouble();
+    return accuracy;
+  }
+
+  GNSSLocation formatValues(GNSSLocation rawData) {
+    var latitute = rawData.latitude;
+    var latDirection = rawData.latitudeDirection;
+    var longitude = rawData.longitude;
+    var longDirection = rawData.longitudeDirection;
+    var accuracy = 0.0;
+    var latError = rawData.latitudeError;
+    var longError = rawData.longitudeError;
+    var latPrefix = rawData.latPrefix;
+    var longPrefix = rawData.longPrefix;
+
+    if (latitude != null && latDirection != null) {
+      if (latitudeDirection == "S") {
+        latPrefix = "-";
+      } else {
+        latPrefix = "";
+      }
+    }
+
+    if (longitude != null && latDirection != null) {
+      if (longitudeDirection == "W") {
+        longPrefix = "-";
+      } else {
+        longPrefix = "";
+      }
+    }
+
+    if (latError != null && longError != null) {
+      accuracy = calculateAccuracy(latError, longError);
+    }
+
+    return GNSSLocation(
+        receiverType: rawData.receiverType,
+        latitude: latitute,
+        longitude: longitude,
+        latitudeDirection: latDirection,
+        longitudeDirection: longDirection,
+        altitude: rawData.altitude,
+        utcOfPositionFix: rawData.utcOfPositionFix,
+        date: rawData.date,
+        accuracy: accuracy,
+        fixQuality: rawData.fixQuality,
+        pdop: rawData.pdop,
+        numberOfSatellites: rawData.numberOfSatellites,
+        batteryPercentage: rawData.batteryPercentage,
+        latitudeError: latError,
+        longitudeError: longError,
+        latPrefix: latPrefix,
+        longPrefix: longPrefix);
   }
 }
 

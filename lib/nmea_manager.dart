@@ -146,36 +146,21 @@ class NMEAManager {
   GNSSLocation? formatMessage(String message) {
     var parameters = message.split(',');
     var type = parameters[0];
+    if (parameters.length < 10) {
+      return null;
+    }
     switch (type) {
       case '\$GPGNS':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPGNS(parameters);
       case '\$GPGGA':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPGGA(parameters);
       case '\$GPGSA':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPGSA(parameters);
       case '\$GPRMC':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPRMC(parameters);
       case '\$GPGST':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPGST(parameters);
       case '\$GPGSV':
-        if (parameters.length < 10) {
-          return null;
-        }
         return _formatGPGSV(parameters);
       default:
         return null;
@@ -196,9 +181,11 @@ class NMEAManager {
     var longitudeSigmaError = parameters[GPGST.longitudeSigmaError.position];
     var heightSigmaError = parameters[GPGST.heightSigmaError.position];
     var checksum = parameters[GPGST.checksum.position];
-    final returnMessage =
-        'type: $type, utcOfPositionFix: $utcOfPositionFix, rmsValue: $rmsValue, errorEllipseSemiMajor: $errorEllipseSemiMajor, errorEllipseSemiMajor2: $errorEllipseSemiMajor2, errorEllipseOrientation: $errorEllipseOrientation, latitudeSigmaError: $latitudeSigmaError, longitudeSigmaError: $longitudeSigmaError, heightSigmaError: $heightSigmaError, checksum: $checksum';
-    return GNSSLocation();
+
+    return GNSSLocation(
+      latitudeError: double.tryParse(latitudeSigmaError),
+      longitudeError: double.tryParse(longitudeSigmaError),
+    );
   }
 
   GNSSLocation _formatGPGNS(List<String> parameters) {
@@ -224,8 +211,9 @@ class NMEAManager {
       utcOfPositionFix: utcOfPositionFix,
       latitude: double.tryParse(latitude),
       longitude: double.tryParse(longitude),
+      latitudeDirection: latitudeDirection,
+      longitudeDirection: longitudeDirection,
       numberOfSatellites: int.tryParse(numberOfSatellitesInUse),
-      pdop: double.tryParse(hdop),
       altitude: double.tryParse(orthometricHeightMSL),
     );
   }

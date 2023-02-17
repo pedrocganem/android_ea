@@ -55,6 +55,10 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
         return result.success(socket?.isConnected)
     }
 
+    private fun requestBluetoothPermission(result: MethodChannel.Result) {
+        
+    }
+
     private fun setupBluetooth(result: MethodChannel.Result) {
         bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter

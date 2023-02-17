@@ -1,6 +1,7 @@
 import 'package:android_ea/gnss_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'nmea_manager.dart';
 
@@ -44,14 +45,15 @@ class _MyHomePageState extends State<MyHomePage> {
   GNSSLocation gnssLocation = GNSSLocation();
 
   Future<void> initBluetooth() async {
-    final result = await methodChannel.invokeMethod(bluetoothSetup);
-    debugPrint(result);
+    final permission = Permission.bluetooth.request();
+    if (await permission.isGranted) {
+      final result = await methodChannel.invokeMethod(bluetoothSetup);
+      debugPrint(result);
+    }
   }
 
   Stream<String> setupEventChannel() async* {
-    eventChannel.receiveBroadcastStream().listen((event) {
-      debugPrint(event);
-    });
+    eventChannel.receiveBroadcastStream().listen((event) {});
   }
 
   Future<void> getBondedDevices() async {
@@ -73,10 +75,14 @@ class _MyHomePageState extends State<MyHomePage> {
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              print(snapshot.data);
               final newData = nmeaParser.formatMessage(snapshot.data);
               if (newData != null) {
                 gnssLocation = gnssLocation.merge(newData);
+                gnssLocation = gnssLocation.formatValues(gnssLocation);
+                print(gnssLocation.latitudeError);
+                print(gnssLocation.latitudeDirection);
+                print(gnssLocation.longitudeError);
+                print(gnssLocation.longitudeDirection);
               }
               debugPrint(gnssLocation.numberOfSatellites.toString());
               return Center(
@@ -85,38 +91,42 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Latitute: ${gnssLocation.latitude}",
-                      style: TextStyle(fontSize: 22),
+                      "Type: ${gnssLocation.receiverType}",
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Longitude: ${gnssLocation.longitude}",
-                      style: TextStyle(fontSize: 22),
+                      "Latitute: ${gnssLocation.latPrefix}${gnssLocation.latitude! / 100}",
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Longitude: ${gnssLocation.longPrefix}${gnssLocation.longitude! / 100}",
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
                       "Altitude: ${gnssLocation.altitude}",
-                      style: TextStyle(fontSize: 22),
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Accuracy: ${gnssLocation.accuracy}",
-                      style: TextStyle(fontSize: 22),
+                      "Accuracy: ${gnssLocation.accuracy}m",
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
                       "Fix Quality: ${gnssLocation.fixQuality}",
-                      style: TextStyle(fontSize: 22),
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
                       "PDOP: ${gnssLocation.pdop}",
-                      style: TextStyle(fontSize: 22),
+                      style: const TextStyle(fontSize: 22),
                     ),
                     Text(
                       "Number of Satellites: ${gnssLocation.numberOfSatellites}",
-                      style: TextStyle(fontSize: 22),
+                      style: const TextStyle(fontSize: 22),
                     ),
                   ],
                 ),
               );
             }
-            return Text("No data");
+            return const Text("No data");
           },
         ),
       ),
