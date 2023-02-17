@@ -14,6 +14,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 import java.io.*
+import java.lang.reflect.Method
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -37,17 +38,21 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
     })
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-
         GeneratedPluginRegistrant.registerWith(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel).setMethodCallHandler { call, result ->
             when (call.method) {
                 "bluetooth_setup" -> setupBluetooth(result)
                 "discoverSupportedDevice" -> discoverSupportedDevice(result)
                 "connectToDevice" -> connectToDevice(result)
+                "checkIfDeviceIsConnected" -> checkIfDeviceIsConnected(result)
             }
         }
 
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, eventChannel).setStreamHandler(this)
+    }
+
+    private fun checkIfDeviceIsConnected(result: MethodChannel.Result) {
+        return result.success(socket?.isConnected)
     }
 
     private fun setupBluetooth(result: MethodChannel.Result) {

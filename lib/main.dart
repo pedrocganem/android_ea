@@ -2,6 +2,8 @@ import 'package:android_ea/NMEA_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'nmea_types.dart';
+
 //00001101-0000-1000-8000-00805f9b34fb -> Bad elf
 
 void main() {
@@ -38,6 +40,8 @@ class _MyHomePageState extends State<MyHomePage> {
   static const eventChannel = EventChannel(eventChannelPath);
   static const bluetoothSetup = "bluetooth_setup";
 
+  final nmeaParser = NmeaRawParser();
+
   Future<void> initBluetooth() async {
     final result = await methodChannel.invokeMethod(bluetoothSetup);
     debugPrint(result);
@@ -67,8 +71,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: StreamBuilder(
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
-            print(snapshot.data);
             if (snapshot.hasData) {
+              final gnssLocation = nmeaParser.formatMessage(snapshot.data, );
+              print(gnssLocation);
               return Column(
                 children: [Text("Data: ${snapshot.data}")],
               );

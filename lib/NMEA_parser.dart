@@ -1,74 +1,57 @@
-class NmeaEntity {
-  String? messageType;
+// ignore_for_file: file_names
+
+class GNSSLocation {
+  String? receiverType;
   double? latitude;
-  String? latitudeDirection;
   double? longitude;
+  String? latitudeDirection;
   String? longitudeDirection;
-  int? fixQuality;
-  int? satellites;
-  double? hdop;
   double? altitude;
-  double? geoidSeparation;
+  String? utcOfPositionFix;
+  String? date;
+  double? accuracy;
+  int? fixQuality;
+  double? pdop;
+  int? numberOfSatellites;
+  int? batteryPercentage;
+  double? latitudeError;
+  double? longitudeError;
 
-  NmeaEntity({
-    this.messageType,
+  GNSSLocation({
+    this.receiverType,
     this.latitude,
-    this.latitudeDirection,
     this.longitude,
+    this.latitudeDirection,
     this.longitudeDirection,
-    this.fixQuality,
-    this.satellites,
-    this.hdop,
     this.altitude,
-    this.geoidSeparation,
+    this.utcOfPositionFix,
+    this.date,
+    this.accuracy,
+    this.fixQuality,
+    this.pdop,
+    this.numberOfSatellites,
+    this.batteryPercentage,
+    this.latitudeError,
+    this.longitudeError,
   });
+}
 
-  static NmeaEntity? fromNMEA(String nmeaString) {
-    RegExp regExp = RegExp(
-        r'\$(GPGGA),(\d+\.\d+),([NS]),(\d+\.\d+),([EW]),(\d),(\d+),(\d+\.\d+),(-?\d+\.\d+),M,(-?\d+\.\d+),M,,\*.{2}');
-    Match? match = regExp.firstMatch(nmeaString);
+enum DeviceType { internalGPS, trimble, externalAccessory }
 
-    if (match == null) {
-      return null;
-    }
-
-    return NmeaEntity(
-      messageType: match.group(1),
-      latitude: double.tryParse(match.group(2) ?? ''),
-      latitudeDirection: match.group(3),
-      longitude: double.tryParse(match.group(4) ?? ''),
-      longitudeDirection: match.group(5),
-      fixQuality: int.tryParse(match.group(6) ?? ''),
-      satellites: int.tryParse(match.group(7) ?? ''),
-      hdop: double.tryParse(match.group(8) ?? ''),
-      altitude: double.tryParse(match.group(9) ?? ''),
-      geoidSeparation: double.tryParse(match.group(10) ?? ''),
-    );
-  }
-
-  NmeaEntity copyWith({
-    String? messageType,
-    double? latitude,
-    String? latitudeDirection,
-    double? longitude,
-    String? longitudeDirection,
-    int? fixQuality,
-    int? satellites,
-    double? hdop,
-    double? altitude,
-    double? geoidSeparation,
-  }) {
-    return NmeaEntity(
-      messageType: messageType ?? this.messageType,
-      latitude: latitude ?? this.latitude,
-      latitudeDirection: latitudeDirection ?? this.latitudeDirection,
-      longitude: longitude ?? this.longitude,
-      longitudeDirection: longitudeDirection ?? this.longitudeDirection,
-      fixQuality: fixQuality ?? this.fixQuality,
-      satellites: satellites ?? this.satellites,
-      hdop: hdop ?? this.hdop,
-      altitude: altitude ?? this.altitude,
-      geoidSeparation: geoidSeparation ?? this.geoidSeparation,
-    );
-  }
+enum GNSSLocationDataKeys {
+  receiverType,
+  latitude,
+  longitude,
+  latitudeDirection,
+  longitudeDirection,
+  altitude,
+  utcOfPositionFix,
+  date,
+  accuracy,
+  fixQuality,
+  pdop,
+  numberOfSatellites,
+  batteryPercentage,
+  latitudeError,
+  longitudeError,
 }
