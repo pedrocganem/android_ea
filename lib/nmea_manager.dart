@@ -142,7 +142,7 @@ enum GPGSV {
   const GPGSV(this.position);
 }
 
-class NmeaRawParser {
+class NMEAManager {
   GNSSLocation? formatMessage(String message) {
     var parameters = message.split(',');
     var type = parameters[0];

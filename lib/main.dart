@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static const eventChannel = EventChannel(eventChannelPath);
   static const bluetoothSetup = "bluetooth_setup";
 
-  final nmeaParser = NmeaRawParser();
+  final nmeaParser = NMEAManager();
   GNSSLocation gnssLocation = GNSSLocation();
 
   Future<void> initBluetooth() async {
