@@ -78,11 +78,9 @@ class _MyHomePageState extends State<MyHomePage> {
               final newData = nmeaParser.formatMessage(snapshot.data);
               if (newData != null) {
                 gnssLocation = gnssLocation.merge(newData);
-                gnssLocation = gnssLocation.formatValues(gnssLocation);
+                // gnssLocation = gnssLocation.formatValues(gnssLocation);
                 print(gnssLocation.latitudeError);
-                print(gnssLocation.latitudeDirection);
                 print(gnssLocation.longitudeError);
-                print(gnssLocation.longitudeDirection);
               }
               debugPrint(gnssLocation.numberOfSatellites.toString());
               return Center(
@@ -95,11 +93,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Latitute: ${gnssLocation.latPrefix}${gnssLocation.latitude! / 100}",
+                      "Latitute: ${gnssLocation.latitude! / 100}",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Longitude: ${gnssLocation.longPrefix}${gnssLocation.longitude! / 100}",
+                      "Longitude: ${gnssLocation.longitude! / 100}",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(

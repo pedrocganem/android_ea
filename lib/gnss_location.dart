@@ -41,23 +41,23 @@ class GNSSLocation {
     this.longPrefix = "",
   });
 
-  GNSSLocation merge(GNSSLocation oldData) {
+  GNSSLocation merge(GNSSLocation newData) {
     return GNSSLocation(
-      receiverType: receiverType ?? oldData.receiverType,
-      latitude: latitude ?? oldData.latitude,
-      longitude: longitude ?? oldData.longitude,
-      latitudeDirection: latitudeDirection ?? oldData.latitudeDirection,
-      longitudeDirection: longitudeDirection ?? oldData.longitudeDirection,
-      altitude: altitude ?? oldData.altitude,
-      utcOfPositionFix: utcOfPositionFix ?? oldData.utcOfPositionFix,
-      date: date ?? oldData.date,
-      accuracy: accuracy ?? oldData.accuracy,
-      fixQuality: fixQuality ?? oldData.fixQuality,
-      pdop: pdop ?? oldData.pdop,
-      numberOfSatellites: numberOfSatellites ?? oldData.numberOfSatellites,
-      batteryPercentage: batteryPercentage ?? oldData.batteryPercentage,
-      latitudeError: latitudeError ?? oldData.latitudeError,
-      longitudeError: longitudeError ?? oldData.longitudeError,
+      receiverType: newData.receiverType ?? receiverType,
+      latitude: newData.latitude ?? latitude,
+      longitude: newData.longitude ?? longitude,
+      latitudeDirection: newData.latitudeDirection ?? latitudeDirection,
+      longitudeDirection: newData.longitudeDirection ?? longitudeDirection,
+      altitude: newData.altitude ?? altitude,
+      utcOfPositionFix: newData.utcOfPositionFix ?? utcOfPositionFix,
+      date: newData.date ?? date,
+      accuracy: newData.accuracy ?? accuracy,
+      fixQuality: newData.fixQuality ?? fixQuality,
+      pdop: newData.pdop ?? pdop,
+      numberOfSatellites: newData.numberOfSatellites ?? numberOfSatellites,
+      batteryPercentage: newData.batteryPercentage ?? batteryPercentage,
+      latitudeError: newData.latitudeError ?? latitudeError,
+      longitudeError: newData.longitudeError ?? longitudeError,
     );
   }
 
