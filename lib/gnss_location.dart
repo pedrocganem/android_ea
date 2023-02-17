@@ -34,6 +34,26 @@ class GNSSLocation {
     this.latitudeError,
     this.longitudeError,
   });
+
+  GNSSLocation merge(GNSSLocation oldData) {
+    return GNSSLocation(
+      receiverType: receiverType ?? oldData.receiverType,
+      latitude: latitude ?? oldData.latitude,
+      longitude: longitude ?? oldData.longitude,
+      latitudeDirection: latitudeDirection ?? oldData.latitudeDirection,
+      longitudeDirection: longitudeDirection ?? oldData.longitudeDirection,
+      altitude: altitude ?? oldData.altitude,
+      utcOfPositionFix: utcOfPositionFix ?? oldData.utcOfPositionFix,
+      date: date ?? oldData.date,
+      accuracy: accuracy ?? oldData.accuracy,
+      fixQuality: fixQuality ?? oldData.fixQuality,
+      pdop: pdop ?? oldData.pdop,
+      numberOfSatellites: numberOfSatellites ?? oldData.numberOfSatellites,
+      batteryPercentage: batteryPercentage ?? oldData.batteryPercentage,
+      latitudeError: latitudeError ?? oldData.latitudeError,
+      longitudeError: longitudeError ?? oldData.longitudeError,
+    );
+  }
 }
 
 enum DeviceType { internalGPS, trimble, externalAccessory }

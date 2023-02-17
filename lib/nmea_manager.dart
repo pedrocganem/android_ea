@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-import 'package:android_ea/NMEA_parser.dart';
+import 'package:android_ea/gnss_location.dart';
 
 enum NMEATypes {
   GPGNS, // https://www.trimble.com/OEM_ReceiverHelp/V4.44/en/NMEA-0183messages_GNS.html
@@ -78,8 +78,7 @@ enum GPGGA {
   geoidSeparation(11),
   geoidSeparationUnitOfMeasure(12),
   ageOfDifferentialGPSData(13),
-  referenceStationID(14),
-  checksum(15);
+  referenceStationID(14);
 
   final int position;
   const GPGGA(this.position);
@@ -179,7 +178,7 @@ class NmeaRawParser {
         }
         return _formatGPGSV(parameters);
       default:
-        return entity;
+        return null;
     }
   }
 
@@ -199,7 +198,7 @@ class NmeaRawParser {
     var checksum = parameters[GPGST.checksum.position];
     final returnMessage =
         'type: $type, utcOfPositionFix: $utcOfPositionFix, rmsValue: $rmsValue, errorEllipseSemiMajor: $errorEllipseSemiMajor, errorEllipseSemiMajor2: $errorEllipseSemiMajor2, errorEllipseOrientation: $errorEllipseOrientation, latitudeSigmaError: $latitudeSigmaError, longitudeSigmaError: $longitudeSigmaError, heightSigmaError: $heightSigmaError, checksum: $checksum';
-    return returnMessage;
+    return GNSSLocation();
   }
 
   GNSSLocation _formatGPGNS(List<String> parameters) {
@@ -220,10 +219,15 @@ class NmeaRawParser {
     var referenceStationID = parameters[GPGNS.referenceStationID.position];
     var checksum = parameters[GPGNS.checksum.position];
 
-    final returnString =
-        "type: $type, utcOfPositionFix: $utcOfPositionFix, latitude: $latitude, latitudeDirection: $latitudeDirection, longitude: $longitude, longitudeDirection: $longitudeDirection, modeIndicator: $modeIndicator, numberOfSatellitesInUse: $numberOfSatellitesInUse, hdop: $hdop, orthometricHeightMSL: $orthometricHeightMSL, geoidSeparation: $geoidSeparation, ageOfDifferentialGPSData: $ageOfDifferentialGPSData, referenceStationID: $referenceStationID, checksum: $checksum";
-
-    return returnString;
+    return GNSSLocation(
+      receiverType: type,
+      utcOfPositionFix: utcOfPositionFix,
+      latitude: double.tryParse(latitude),
+      longitude: double.tryParse(longitude),
+      numberOfSatellites: int.tryParse(numberOfSatellitesInUse),
+      pdop: double.tryParse(hdop),
+      altitude: double.tryParse(orthometricHeightMSL),
+    );
   }
 
   GNSSLocation _formatGPGGA(List<String> parameters) {
@@ -246,11 +250,18 @@ class NmeaRawParser {
     var ageOfDifferentialGPSData =
         parameters[GPGGA.ageOfDifferentialGPSData.position];
     var referenceStationID = parameters[GPGGA.referenceStationID.position];
-    var checksum = parameters[GPGGA.checksum.position];
 
-    final returnString =
-        "type: $type, utcOfPositionFix: $utcOfPositionFix, latitude: $latitude, latitudeDirection: $latitudeDirection, longitude: $longitude, longitudeDirection: $longitudeDirection, gpsQualityIndicator: $gpsQualityIndicator, numberOfSatellitesInUse: $numberOfSatellitesInUse, hdop: $hdop, orthometricHeightMSL: $orthometricHeightMSL, orthometricHeightMSLUnitOfMeasure: $orthometricHeightMSLUnitOfMeasure, geoidSeparation: $geoidSeparation, geoidSeparationUnitOfMeasure: $geoidSeparationUnitOfMeasure, ageOfDifferentialGPSData: $ageOfDifferentialGPSData, referenceStationID: $referenceStationID, checksum: $checksum";
-    return returnString;
+    return GNSSLocation(
+      receiverType: type,
+      utcOfPositionFix: utcOfPositionFix,
+      latitude: double.tryParse(latitude),
+      longitude: double.tryParse(longitude),
+      altitude: double.tryParse(orthometricHeightMSL),
+      latitudeDirection: latitudeDirection,
+      longitudeDirection: longitudeDirection,
+      numberOfSatellites: int.tryParse(numberOfSatellitesInUse),
+      fixQuality: int.tryParse(gpsQualityIndicator),
+    );
   }
 
   GNSSLocation _formatGPGSA(List<String> parameters) {
@@ -263,9 +274,10 @@ class NmeaRawParser {
     var vdop = parameters[GPGSA.vdop.position];
     // var checksum = parameters[GPGSA.checksum.position];
 
-    final returnString =
-        "type: $type, mode: $mode, fixType: $fixType, prnNumber: $prnNumber, pdop: $pdop, hdop: $hdop, vdop: $vdop";
-    return returnString;
+    return GNSSLocation(
+      receiverType: type,
+      pdop: double.tryParse(pdop),
+    );
   }
 
   GNSSLocation _formatGPRMC(List<String> parameters) {
@@ -282,9 +294,15 @@ class NmeaRawParser {
     var magneticVariation = parameters[GPRMC.magneticVariation.position];
     var checksum = parameters[GPRMC.checksum.position];
 
-    final returnString =
-        "type: $type, utcOfPositionFix: $utcOfPositionFix, status: $status, latitude: $latitude, latitudeDirection: $latitudeDirection, longitude: $longitude, longitudeDirection: $longitudeDirection, speed: $speed, trackAngle: $trackAngle, date: $date, magneticVariation: $magneticVariation, checksum: $checksum";
-    return returnString;
+    return GNSSLocation(
+      receiverType: type,
+      utcOfPositionFix: utcOfPositionFix,
+      latitude: double.tryParse(latitude),
+      longitude: double.tryParse(longitude),
+      latitudeDirection: latitudeDirection,
+      longitudeDirection: longitudeDirection,
+      date: date,
+    );
   }
 
   GNSSLocation _formatGPGSV(List<String> parameters) {
@@ -298,8 +316,9 @@ class NmeaRawParser {
     var snr = parameters[GPGSV.snr.position];
     var checksum = parameters[GPGSV.checksum.position];
 
-    final returnString =
-        "type: $type, numberOfMessages: $numberOfMessages, messageNumber: $messageNumber, satellitesInView: $satellitesInView, satelliteNumber: $satelliteNumber, elevation: $elevation, azimuth: $azimuth, snr: $snr, checksum: $checksum";
-    return returnString;
+    return GNSSLocation(
+      receiverType: type,
+      numberOfSatellites: int.tryParse(satelliteNumber),
+    );
   }
 }

@@ -1,8 +1,8 @@
-import 'package:android_ea/NMEA_parser.dart';
+import 'package:android_ea/gnss_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'nmea_types.dart';
+import 'nmea_manager.dart';
 
 //00001101-0000-1000-8000-00805f9b34fb -> Bad elf
 
@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static const bluetoothSetup = "bluetooth_setup";
 
   final nmeaParser = NmeaRawParser();
+  GNSSLocation gnssLocation = GNSSLocation();
 
   Future<void> initBluetooth() async {
     final result = await methodChannel.invokeMethod(bluetoothSetup);
@@ -72,10 +73,47 @@ class _MyHomePageState extends State<MyHomePage> {
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              final gnssLocation = nmeaParser.formatMessage(snapshot.data, );
-              print(gnssLocation);
-              return Column(
-                children: [Text("Data: ${snapshot.data}")],
+              print(snapshot.data);
+              final newData = nmeaParser.formatMessage(snapshot.data);
+              if (newData != null) {
+                gnssLocation = gnssLocation.merge(newData);
+              }
+              debugPrint(gnssLocation.numberOfSatellites.toString());
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Latitute: ${gnssLocation.latitude}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Longitude: ${gnssLocation.longitude}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Altitude: ${gnssLocation.altitude}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Accuracy: ${gnssLocation.accuracy}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Fix Quality: ${gnssLocation.fixQuality}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "PDOP: ${gnssLocation.pdop}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                    Text(
+                      "Number of Satellites: ${gnssLocation.numberOfSatellites}",
+                      style: TextStyle(fontSize: 22),
+                    ),
+                  ],
+                ),
               );
             }
             return Text("No data");
