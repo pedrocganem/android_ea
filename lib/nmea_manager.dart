@@ -144,12 +144,8 @@ enum GPGSV {
 
 class NMEAManager {
   GNSSLocation? formatMessage(String message) {
-    var package = message.split("\n");
-    var parameters = package.join("").split(',');
+    var parameters = message.split(',');
     var type = parameters[0];
-    if (parameters.length < 10) {
-      return null;
-    }
     switch (type) {
       case '\$GPGNS':
         return _formatGPGNS(parameters);
@@ -169,6 +165,9 @@ class NMEAManager {
   }
 
   GNSSLocation _formatGPGST(List<String> parameters) {
+    if (parameters.length < 5) {
+      return GNSSLocation();
+    }
     var type = parameters[GPGST.type.position];
     var utcOfPositionFix = parameters[GPGST.utcOfPositionFix.position];
     var rmsValue = parameters[GPGST.rmsValue.position];
@@ -181,7 +180,7 @@ class NMEAManager {
     var latitudeSigmaError = parameters[GPGST.latitudeSigmaError.position];
     var longitudeSigmaError = parameters[GPGST.longitudeSigmaError.position];
     var heightSigmaError = parameters[GPGST.heightSigmaError.position];
-    var checksum = parameters[GPGST.checksum.position];
+    // var checksum = parameters[GPGST.checksum.position];
 
     return GNSSLocation(
       latitudeError: double.tryParse(latitudeSigmaError),
@@ -190,6 +189,9 @@ class NMEAManager {
   }
 
   GNSSLocation _formatGPGNS(List<String> parameters) {
+    if (parameters.length < 10) {
+      return GNSSLocation();
+    }
     var type = parameters[GPGNS.type.position];
     var utcOfPositionFix = parameters[GPGNS.utcOfPositionFix.position];
     var latitude = parameters[GPGNS.latitude.position];
@@ -220,6 +222,9 @@ class NMEAManager {
   }
 
   GNSSLocation _formatGPGGA(List<String> parameters) {
+    if (parameters.length < 10) {
+      return GNSSLocation();
+    }
     var type = parameters[GPGGA.type.position];
     var utcOfPositionFix = parameters[GPGGA.utcOfPositionFix.position];
     var latitude = parameters[GPGGA.latitude.position];
@@ -270,6 +275,9 @@ class NMEAManager {
   }
 
   GNSSLocation _formatGPRMC(List<String> parameters) {
+    if (parameters.length < 10) {
+      return GNSSLocation();
+    }
     var type = parameters[GPRMC.type.position];
     var utcOfPositionFix = parameters[GPRMC.utcOfPositionFix.position];
     var status = parameters[GPRMC.status.position];
