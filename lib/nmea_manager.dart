@@ -315,7 +315,6 @@ class NMEAManager {
 
     return GNSSLocation(
       receiverType: type,
-      numberOfSatellites: int.tryParse(satelliteNumber),
     );
   }
 }
