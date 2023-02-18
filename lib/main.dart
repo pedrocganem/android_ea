@@ -86,15 +86,17 @@ class _MyHomePageState extends State<MyHomePage> {
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              // final locationData = snapshot.data as LocationData;
-              // print(locationData);
               print(snapshot.data);
               print("-------------//-----------------");
 
-              final newData = nmeaParser.formatMessage(snapshot.data);
-              if (newData != null) {
-                gnssLocation = gnssLocation.merge(newData);
-                gnssLocation = gnssLocation.formatValues(gnssLocation);
+              final splitedNewData = snapshot.data.toString().split("\n");
+              // Parse every new nmea 
+              for (var i = 0; i < splitedNewData.length; i++) {
+                final newData = nmeaParser.formatMessage(splitedNewData[i]);
+                if (newData != null) {
+                  gnssLocation = gnssLocation.merge(newData);
+                  gnssLocation = gnssLocation.formatValues(gnssLocation);
+                }
               }
               return Center(
                 child: Column(
@@ -114,11 +116,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Altitude: ${gnssLocation.altitude!.toStringAsFixed(2)}",
+                      "Altitude: ${gnssLocation.altitude!.toStringAsFixed(2)}m",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Accuracy: ${gnssLocation.accuracy}m",
+                      "Accuracy: ${gnssLocation.accuracy!.toStringAsFixed(2)}m",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(

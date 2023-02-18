@@ -66,7 +66,7 @@ class GNSSLocation {
     final b = pow(latError, 2);
     final c = a + b;
     final d = sqrt(c);
-    final accuracy = d.truncateToDouble();
+    final accuracy = d;
     return accuracy;
   }
 
