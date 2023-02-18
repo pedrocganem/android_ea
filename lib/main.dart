@@ -106,15 +106,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Latitute: ${gnssLocation.latitude! / 100}",
+                      "Latitute: ${gnssLocation.latPrefix}${(gnssLocation.latitude! / 100).toStringAsFixed(8)}",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Longitude: ${gnssLocation.longitude! / 100}",
+                      "Longitude: ${gnssLocation.longPrefix}${(gnssLocation.longitude! / 100).toStringAsFixed(8)}",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(
-                      "Altitude: ${gnssLocation.altitude}",
+                      "Altitude: ${gnssLocation.altitude!.toStringAsFixed(2)}",
                       style: const TextStyle(fontSize: 22),
                     ),
                     Text(

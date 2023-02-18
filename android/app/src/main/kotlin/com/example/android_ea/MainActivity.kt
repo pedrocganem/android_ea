@@ -75,7 +75,7 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
         return if(supportedDevice == null) {
             result.error("400", "No Supported device", "")
         } else {
-            result.success("device:" + supportedDevice!!.name+ " is bounded")
+            result.success(supportedDevice?.name)
         }
     }
     @SuppressLint("MissingPermission")

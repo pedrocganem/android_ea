@@ -99,6 +99,7 @@ class GNSSLocation {
 
     if (latError != null && longError != null) {
       accuracy = calculateAccuracy(latError, longError);
+      print(accuracy);
     }
 
     return GNSSLocation(
