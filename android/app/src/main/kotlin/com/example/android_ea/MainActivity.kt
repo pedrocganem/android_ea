@@ -14,17 +14,19 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
 import java.io.*
-import java.lang.reflect.Method
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import LiveLocationManager
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 
 
 class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
-
     private val channel: String = "ecobot.bluetooth.channel"
-    private val eventChannel: String = "ecobot.bluetooth.event-channel"
+    private val bluetoothChannel: String = "ecobot.bluetooth.event-channel"
+    private val liveLocationChannel: String = "live.location.channel"
     lateinit var bluetoothManager: BluetoothManager
     private var connectedThread: ConnectedThread? = null
     var supportedDevice: BluetoothDevice? = null
@@ -48,7 +50,29 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
             }
         }
 
-        EventChannel(flutterEngine.dartExecutor.binaryMessenger, eventChannel).setStreamHandler(this)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, bluetoothChannel).setStreamHandler(this)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, liveLocationChannel).setStreamHandler(object : EventChannel.StreamHandler {
+            private var eventSink: EventChannel.EventSink? = null
+            private var locationEventSink: EventChannel.EventSink? = null
+            private val locationManager = LiveLocationManager(context)
+
+            override fun onListen(arguments: Any?, sink: EventChannel.EventSink) {
+                locationEventSink = sink
+                val locationCallback = object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult) {
+                        val lastLocation = locationResult.lastLocation
+                        val data = lastLocation.extras
+                        eventSink?.success(data)
+                    }
+                }
+                locationManager.startLocationUpdates(locationCallback)
+            }
+
+            override fun onCancel(arguments: Any?) {
+                locationManager.stopLocationUpdates()
+                locationEventSink = null
+            }
+        })
     }
 
     private fun checkIfDeviceIsConnected(result: MethodChannel.Result) {
