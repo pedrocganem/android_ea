@@ -144,7 +144,8 @@ enum GPGSV {
 
 class NMEAManager {
   GNSSLocation? formatMessage(String message) {
-    var parameters = message.split(',');
+    var package = message.split("\n");
+    var parameters = package.join("").split(',');
     var type = parameters[0];
     if (parameters.length < 10) {
       return null;

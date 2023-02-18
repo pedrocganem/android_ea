@@ -1,6 +1,8 @@
 import 'package:android_ea/gnss_location.dart';
+import 'package:android_ea/location_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'nmea_manager.dart';
@@ -35,6 +37,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   static const channel = 'ecobot.bluetooth.channel';
   static const eventChannelPath = 'ecobot.bluetooth.event-channel';
   static const methodChannel = MethodChannel(channel);
@@ -43,6 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final nmeaParser = NMEAManager();
   GNSSLocation gnssLocation = GNSSLocation();
+  final location = Location();
 
   Future<void> initBluetooth() async {
     final permission = Permission.bluetooth.request();
@@ -68,6 +76,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    location.onLocationChanged.listen(
+      (event) => print(event.accuracy),
+    );
     return Scaffold(
       appBar: AppBar(),
       body: Center(
@@ -75,14 +86,16 @@ class _MyHomePageState extends State<MyHomePage> {
           stream: eventChannel.receiveBroadcastStream(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
+              // final locationData = snapshot.data as LocationData;
+              // print(locationData);
+              print(snapshot.data);
+              print("-------------//-----------------");
+
               final newData = nmeaParser.formatMessage(snapshot.data);
               if (newData != null) {
                 gnssLocation = gnssLocation.merge(newData);
-                // gnssLocation = gnssLocation.formatValues(gnssLocation);
-                print(gnssLocation.latitudeError);
-                print(gnssLocation.longitudeError);
+                gnssLocation = gnssLocation.formatValues(gnssLocation);
               }
-              debugPrint(gnssLocation.numberOfSatellites.toString());
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -131,6 +144,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          // final loc = await location.requestPermission();
+          // print(loc);
+          // final serv = await location.requestService();
+          // print(serv);
           await initBluetooth();
           await getBondedDevices();
           await connectToDevice();

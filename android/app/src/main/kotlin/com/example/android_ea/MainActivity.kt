@@ -55,17 +55,12 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
         return result.success(socket?.isConnected)
     }
 
-    private fun requestBluetoothPermission(result: MethodChannel.Result) {
-        
-    }
-
     private fun setupBluetooth(result: MethodChannel.Result) {
         bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
             ?: return result.error("400", "Bluetooth is Off", "")
         return result.success("Bluetooth is on")
     }
-
 
 
     @SuppressLint("MissingPermission")
@@ -156,11 +151,23 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
 
             try {
                 val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+                val packageSize = 10 // Set the desired package size
+                val packageBuilder = StringBuilder()
                 while (socket.isConnected && !interrupted()) {
                     if (reader.ready()) {
-                        val line = reader.readLine()
-                        val message = Message.obtain(handler, 0, line)
-                        message.sendToTarget()
+                        // Read up to 10 lines into the package builder
+                        for (i in 0 until packageSize) {
+                            val line = reader.readLine() ?: break
+                            packageBuilder.append(line)
+                            packageBuilder.append("\n") // Add a newline between each line
+                        }
+
+                        // If we've read at least one line, send the package
+                        if (packageBuilder.isNotEmpty()) {
+                            val packageMessage = Message.obtain(handler, 0, packageBuilder.toString())
+                            packageMessage.sendToTarget()
+                            packageBuilder.clear()
+                        }
                     } else {
                         SystemClock.sleep(50)
                     }
@@ -174,8 +181,12 @@ class MainActivity: FlutterActivity(), EventChannel.StreamHandler {
                 pingFuture.cancel(true)
             } finally {
                 socket.close()
+                runOnUiThread {
+                    eventSink?.success("socket_closing")
+                }
                 interrupt()
             }
+
         }
     }
 }
